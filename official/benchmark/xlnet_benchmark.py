@@ -143,6 +143,7 @@ class XLNetSquadAccuracy(XLNetBenchmarkBase):
   def __init__(self, output_dir=None, **kwargs):
     self.train_data_path = SQUAD_DATA_PATH
     self.predict_file = os.path.join(SQUAD_DATA_PATH, "dev-v2.0.json")
+    self.test_data_path = os.path.join(SQUAD_DATA_PATH, "12048.eval.tf_record")
     self.spiece_model_file = os.path.join(SQUAD_DATA_PATH, "spiece.cased.model")
     self.pretrained_checkpoint_path = PRETRAINED_CHECKPOINT_PATH
 
@@ -188,6 +189,7 @@ class XLNetSquadAccuracy(XLNetBenchmarkBase):
     FLAGS.bi_data = False
     FLAGS.init_checkpoint = self.pretrained_checkpoint_path
     FLAGS.train_tfrecord_path = self.train_data_path
+    FLAGS.test_tfrecord_path = self.test_data_path
     FLAGS.spiece_model_file = self.spiece_model_file
     FLAGS.predict_file = self.predict_file
     FLAGS.adam_epsilon=1e-6
