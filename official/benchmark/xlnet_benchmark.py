@@ -199,6 +199,7 @@ class XLNetSquadAccuracy(XLNetBenchmarkBase):
     """Run XLNet model squad v2 accuracy test with 8 GPUs."""
     self._setup()
     FLAGS.model_dir = self._get_model_dir('benchmark_8_gpu_squadv2')
+    FLAGS.predict_dir = FLAGS.model_dir
     # Sets timer_callback to None as we do not use it now.
     self.timer_callback = None
 
