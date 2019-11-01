@@ -183,9 +183,9 @@ class XLNetSquadAccuracy(XLNetBenchmarkBase):
     FLAGS.ff_activation = 'gelu'
     FLAGS.strategy_type = 'mirror'
     FLAGS.learning_rate = 3e-5
-    FLAGS.train_steps = 8000
-    FLAGS.warmup_steps = 1000
-    FLAGS.iterations = 1000
+    FLAGS.train_steps = 16000
+    FLAGS.warmup_steps = 2000
+    FLAGS.iterations = 2000
     FLAGS.bi_data = False
     FLAGS.init_checkpoint = self.pretrained_checkpoint_path
     FLAGS.train_tfrecord_path = self.train_data_path
