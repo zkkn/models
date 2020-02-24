@@ -21,7 +21,7 @@ message CalibrationConfig {
 
     // Per-class sigmoid calibration.
     ClassIdSigmoidCalibrations class_id_sigmoid_calibrations = 4;
-
+    
     // Temperature scaling calibration.
     TemperatureScalingCalibration temperature_scaling_calibration = 5;
   }
