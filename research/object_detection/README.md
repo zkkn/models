@@ -36,6 +36,16 @@ https://scholar.googleusercontent.com/scholar.bib?q=info:l291WsrB-hQJ:scholar.go
 * Alireza Fathi, github: [afathi3](https://github.com/afathi3)
 * Zhichao Lu, github: [pkulzc](https://github.com/pkulzc)
 
+## 変更点
+画像だけでなく、座標も出力するように変更した
+```
+(class id) (bboxの中心のx座標) (bboxの中心のy座標) (bboxの横幅) (bboxの縦幅)
+```
+のような形式のtxtファイルを画像それぞれにつき生成する
+詳しくは、以下のコードを参照。
+models/research/object_detection/utils/visualization_utils.py
+
+
 
 ## Table of contents
 

@@ -102,3 +102,12 @@ tutorials/embedding/text8
 tutorials/embedding/questions-words.txt
 
 samples/outreach/blogs/segmentation_blogpost/carvana-image-masking-challenge/
+
+research/object_detection/protos
+research/object_detection/result
+research/object_detection/test_images/counter_0215
+research/object_detection/test_images/counter_0216
+research/object_detection/test_images/counter_0217
+research/pycocotools
+research/bin
+research/include
