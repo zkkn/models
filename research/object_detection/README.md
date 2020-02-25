@@ -41,9 +41,11 @@ https://scholar.googleusercontent.com/scholar.bib?q=info:l291WsrB-hQJ:scholar.go
 ```
 (class id) (bboxの中心のx座標) (bboxの中心のy座標) (bboxの横幅) (bboxの縦幅)
 ```
-のような形式のtxtファイルを画像それぞれにつき生成する
+のような形式のtxtファイルを画像それぞれにつき生成する.
+
 詳しくは、以下のコードを参照。
-models/research/object_detection/utils/visualization_utils.py
+
+* <a href='utils/visualization_utils.py'>utils/visualization_utils.py</a><br>
 
 
 
