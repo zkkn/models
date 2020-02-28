@@ -1,3 +1,4 @@
+import argparse
 import json
 import numpy as np
 import os
@@ -12,7 +13,6 @@ from collections import defaultdict
 from io import StringIO
 from matplotlib import pyplot as plt
 from PIL import Image
-from IPython.display import display
 
 from object_detection.utils import ops as utils_ops
 from object_detection.utils import label_map_util
@@ -23,6 +23,31 @@ utils_ops.tf = tf.compat.v1
 
 # Patch the location of gfile
 tf.gfile = tf.io.gfile
+
+gpu_options = tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=0.5)
+sess = tf.compat.v1.Session(config=tf.compat.v1.ConfigProto(gpu_options=gpu_options))
+
+def get_args():
+  parser = argparse.ArgumentParser(
+    description="This script outputs the object detection inference result in image and coordinates",
+    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+  parser.add_argument(
+    "--image_dir_path", 
+    type=str,
+    default='/home/intern1/library/models/research/object_detection/test_images/counter_0221',
+    help="set target image directory path")
+  parser.add_argument(
+    "--model_name",
+    type=str,
+    default='mask_rcnn_inception_resnet_v2_atrous_coco_2018_01_28',
+    help="set object detection model. google tensorflow object detection model zoo.")
+  parser.add_argument(
+    "--labels_path",
+    type=str,
+    default='/home/intern1/library/models/research/object_detection/data/mscoco_label_map.pbtxt',
+    help="set label path")
+  args = parser.parse_args()
+  return args
 
 def load_model(model_name):
   base_url = 'http://download.tensorflow.org/models/object_detection/'
@@ -39,32 +64,6 @@ def load_model(model_name):
 
   return model
 
-# List of the strings that is used to add correct label for each box.
-PATH_TO_LABELS = '/home/intern1/library/models/research/object_detection/data/mscoco_label_map.pbtxt'
-category_index = label_map_util.create_category_index_from_labelmap(PATH_TO_LABELS, use_display_name=True)
-
-# If you want to test the code with your images, just add path to the images to the TEST_IMAGE_PATHS.
-PATH_TO_TEST_IMAGES_DIR = pathlib.Path('/home/intern1/library/models/research/object_detection/test_images/counter_0216')
-TEST_IMAGE_PATHS = sorted(list(PATH_TO_TEST_IMAGES_DIR.glob("*.jpg")))
-print(TEST_IMAGE_PATHS)
-
-PATH_TO_OBJECT_DETECTION_DIR = '/home/intern1/library/models/research/object_detection/'
-PATH_TO_RESULT_DIR = os.path.join(PATH_TO_OBJECT_DETECTION_DIR, "result", os.path.basename(str(PATH_TO_TEST_IMAGES_DIR)))
-if not os.path.exists(PATH_TO_RESULT_DIR):
-    os.mkdir(os.path.join(PATH_TO_OBJECT_DETECTION_DIR, "result"))
-    os.mkdir(PATH_TO_RESULT_DIR)
-
-# FIXME: change model
-# HACK: もしかしたらモデルを変えると、型が変わるのかもしれない
-# model_name = 'ssd_mobilenet_v1_coco_2017_11_17'
-model_name = 'mask_rcnn_inception_resnet_v2_atrous_coco_2018_01_28'
-detection_model = load_model(model_name)
-
-print(detection_model.inputs)
-
-detection_model.output_dtypes
-
-detection_model.output_shapes
 
 def run_inference_for_single_image(model, image):
   image = np.asarray(image)
@@ -99,7 +98,7 @@ def run_inference_for_single_image(model, image):
     
   return output_dict
 
-def show_inference(model, image_path):
+def show_inference(model, image_path, result_image_dir_path, category_index):
     # the array based representation of the image will be used later in order to prepare the
     # result image with boxes and labels on it.
     image_np = np.array(Image.open(image_path))
@@ -116,8 +115,8 @@ def show_inference(model, image_path):
         category_index,
         instance_masks=output_dict.get('detection_masks_reframed', None),
         use_normalized_coordinates=True,
-        max_boxes_to_draw=50,
-        min_score_thresh=0.6)
+        max_boxes_to_draw=50)
+        #min_score_thresh=0.2)
     
     coordinates = vis_util.return_coordinates(
                         image_np,
@@ -128,12 +127,12 @@ def show_inference(model, image_path):
                         category_index,
                         instance_masks=output_dict.get('detection_masks_reframed', None),
                         use_normalized_coordinates=True,
-                        max_boxes_to_draw=50,)
-                        # min_score_thresh=0.6)
+                        max_boxes_to_draw=50)
+                        #min_score_thresh=0.2)
 
     # output bbox image
     image_basename = os.path.basename(str(image_path))
-    images_output_dir = os.path.join(PATH_TO_RESULT_DIR, "images")
+    images_output_dir = os.path.join(result_image_dir_path, "images")
     if not os.path.exists(images_output_dir):
         os.mkdir(images_output_dir)
     Image.fromarray(image_np).save(os.path.join(images_output_dir, image_basename))
@@ -144,7 +143,7 @@ def show_inference(model, image_path):
     # だからあえてリストを空白で区切った
 
     label_basename = os.path.splitext(image_basename)[0]+".txt"
-    labels_output_dir = os.path.join(PATH_TO_RESULT_DIR, "labels")
+    labels_output_dir = os.path.join(result_image_dir_path, "labels")
     if not os.path.exists(labels_output_dir):
         os.mkdir(labels_output_dir)
     f = open(os.path.join(labels_output_dir, label_basename), 'w')
@@ -152,5 +151,31 @@ def show_inference(model, image_path):
         f.write(' '.join(map(str, x)) + "\n")
     f.close()
 
-for image_path in TEST_IMAGE_PATHS:
-  show_inference(detection_model, image_path)
+
+def main():
+    args = get_args()
+    image_dir_path = pathlib.Path(args.image_dir_path)
+    model_name = args.model_name
+    labels_path = args.labels_path
+    TEST_IMAGE_PATHS = sorted(list(image_dir_path.glob("*.jpg")))
+    print(TEST_IMAGE_PATHS)
+    # model_name = 'ssd_mobilenet_v1_coco_2017_11_17'
+    detection_model = load_model(model_name)
+    #print(detection_model.inputs)
+    #detection_model.output_dtypes
+    #detection_model.output_shapes
+
+    # List of the strings that is used to add correct label for each box.
+    _category_index = label_map_util.create_category_index_from_labelmap(labels_path, use_display_name=True)
+
+    PATH_TO_OBJECT_DETECTION_DIR = '/home/intern1/library/models/research/object_detection/'
+    _result_image_dir_path = os.path.join(PATH_TO_OBJECT_DETECTION_DIR, "result", os.path.basename(str(image_dir_path)))
+    if not os.path.exists(_result_image_dir_path):
+        # os.mkdir(os.path.join(PATH_TO_OBJECT_DETECTION_DIR, "result"))
+        os.mkdir(_result_image_dir_path)
+
+    for _image_path in TEST_IMAGE_PATHS:
+      show_inference(detection_model, _image_path, _result_image_dir_path, _category_index)
+
+if __name__ == '__main__':
+    main()
