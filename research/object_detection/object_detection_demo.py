@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 import argparse
 import json
 import numpy as np
@@ -25,7 +28,9 @@ utils_ops.tf = tf.compat.v1
 tf.gfile = tf.io.gfile
 
 gpu_options = tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=0.5)
+tf.config.gpu.set_per_process_memory_growth(True)
 sess = tf.compat.v1.Session(config=tf.compat.v1.ConfigProto(gpu_options=gpu_options))
+
 
 def get_args():
   parser = argparse.ArgumentParser(
