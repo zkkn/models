@@ -80,12 +80,13 @@ def return_coordinates(
     keypoints=None,
     use_normalized_coordinates=False,
     max_boxes_to_draw=50,
-    min_score_thresh=.3,
+    min_score_thresh=.5,
     agnostic_mode=False,
     line_thickness=4,
     groundtruth_box_visualization_color='black',
     skip_scores=False,
-    skip_labels=False):
+    skip_labels=False,
+    person_mode=True):
     # Create a display string (and color) for every box location, group any boxes
     # that correspond to the same location.
     box_to_display_str_map = collections.defaultdict(list)
@@ -146,12 +147,15 @@ def return_coordinates(
       bbox_height = int((ymax - ymin)*height)
 
       # FIXME: 人物だけbbox欲しい処理が雑
-      if "person" in box_to_display_str_map[box][0]:
-        # 座標の出力形式を以下のようにするような処理
-        #(class id) (bboxの中心のx座標) (bboxの中心のy座標) (bboxの横幅) (bboxの縦幅)
-        # class id = 0 を personとしておく
+      if person_mode:
+        if "person" in box_to_display_str_map[box][0]:
+          # 座標の出力形式を以下のようにするような処理
+          #(class id) (bboxの中心のx座標) (bboxの中心のy座標) (bboxの横幅) (bboxの縦幅)
+          # class id = 0 を personとしておく
+          coordinates_list.append([0, xcenter, ycenter, bbox_width, bbox_height])
+      else:
         coordinates_list.append([0, xcenter, ycenter, bbox_width, bbox_height])
-      counter_for = counter_for + 1
+
 
     return coordinates_list
 
@@ -825,8 +829,13 @@ def visualize_boxes_and_labels_on_image_array(
     groundtruth_box_visualization_color='black',
     skip_scores=False,
     skip_labels=False,
-    skip_track_ids=False):
-  """Overlay labeled boxes on an image with formatted scores and label names.
+    skip_track_ids=False, 
+    person_mode=True):
+  """
+  return:
+  image, coordinate_list
+
+  Overlay labeled boxes on an image with formatted scores and label names.
 
   This function groups boxes that correspond to the same location
   and creates a display string for each detection and overlays these
@@ -927,7 +936,39 @@ def visualize_boxes_and_labels_on_image_array(
   for box, color in box_to_color_map.items():
     ymin, xmin, ymax, xmax = box
     # FIXME: 人物だけbbox欲しい処理が雑
-    if "person" in box_to_display_str_map[box][0]:
+    if person_mode:
+      if "person" in box_to_display_str_map[box][0]:
+        if instance_masks is not None:
+          draw_mask_on_image_array(
+              image,
+              box_to_instance_masks_map[box],
+              color=color
+          )
+        if instance_boundaries is not None:
+          draw_mask_on_image_array(
+              image,
+              box_to_instance_boundaries_map[box],
+              color='red',
+              alpha=1.0
+          )
+        draw_bounding_box_on_image_array(
+            image,
+            ymin,
+            xmin,
+            ymax,
+            xmax,
+            color=color,
+            thickness=line_thickness,
+            display_str_list=box_to_display_str_map[box],
+            use_normalized_coordinates=use_normalized_coordinates)
+        if keypoints is not None:
+          draw_keypoints_on_image_array(
+              image,
+              box_to_keypoints_map[box],
+              color=color,
+              radius=line_thickness / 2,
+              use_normalized_coordinates=use_normalized_coordinates)
+    else:
       if instance_masks is not None:
         draw_mask_on_image_array(
             image,
@@ -958,7 +999,7 @@ def visualize_boxes_and_labels_on_image_array(
             color=color,
             radius=line_thickness / 2,
             use_normalized_coordinates=use_normalized_coordinates)
-
+  # return [[image], coordinates_list]
   return image
 
 

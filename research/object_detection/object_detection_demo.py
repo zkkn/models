@@ -10,12 +10,14 @@ import six.moves.urllib as urllib
 import sys
 import tarfile
 import tensorflow as tf
+import time
 import zipfile
 
 from collections import defaultdict
 from io import StringIO
 from matplotlib import pyplot as plt
 from PIL import Image
+from tqdm import tqdm
 
 from object_detection.utils import ops as utils_ops
 from object_detection.utils import label_map_util
@@ -27,8 +29,15 @@ utils_ops.tf = tf.compat.v1
 # Patch the location of gfile
 tf.gfile = tf.io.gfile
 
+# gpu settings
 gpu_options = tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=0.5)
-tf.config.gpu.set_per_process_memory_growth(True)
+physical_devices = tf.config.experimental.list_physical_devices('GPU')
+if len(physical_devices) > 0:
+    for k in range(len(physical_devices)):
+        tf.config.experimental.set_memory_growth(physical_devices[k], True)
+        print('memory growth:', tf.config.experimental.get_memory_growth(physical_devices[k]))
+else:
+    print("Not enough GPU hardware devices available")
 sess = tf.compat.v1.Session(config=tf.compat.v1.ConfigProto(gpu_options=gpu_options))
 
 
@@ -39,7 +48,8 @@ def get_args():
   parser.add_argument(
     "--image_dir_path", 
     type=str,
-    default='/home/intern1/library/models/research/object_detection/test_images/counter_0221',
+    #default='/home/intern1/library/models/research/object_detection/test_images/counter_0223',
+    default='/home/intern1/library/models/research/object_detection/test_images/hamada_hideaki',
     help="set target image directory path")
   parser.add_argument(
     "--model_name",
@@ -110,18 +120,17 @@ def show_inference(model, image_path, result_image_dir_path, category_index):
     # Actual detection.
     output_dict = run_inference_for_single_image(model, image_np)
 
-    print(output_dict['detection_boxes'])
     # Visualization of the results of a detection.
     vis_util.visualize_boxes_and_labels_on_image_array(
-        image_np,
-        output_dict['detection_boxes'],
-        output_dict['detection_classes'],
-        output_dict['detection_scores'],
-        category_index,
-        instance_masks=output_dict.get('detection_masks_reframed', None),
-        use_normalized_coordinates=True,
-        max_boxes_to_draw=50)
-        #min_score_thresh=0.2)
+      image_np,
+      output_dict['detection_boxes'],
+      output_dict['detection_classes'],
+      output_dict['detection_scores'],
+      category_index,
+      instance_masks=output_dict.get('detection_masks_reframed', None),
+      use_normalized_coordinates=True,
+      max_boxes_to_draw=50,
+      min_score_thresh=0.2)
     
     coordinates = vis_util.return_coordinates(
                         image_np,
@@ -132,8 +141,10 @@ def show_inference(model, image_path, result_image_dir_path, category_index):
                         category_index,
                         instance_masks=output_dict.get('detection_masks_reframed', None),
                         use_normalized_coordinates=True,
-                        max_boxes_to_draw=50)
-                        #min_score_thresh=0.2)
+                        max_boxes_to_draw=50,
+                        min_score_thresh=0.2)
+
+    print(coordinates)
 
     # output bbox image
     image_basename = os.path.basename(str(image_path))
@@ -160,10 +171,11 @@ def show_inference(model, image_path, result_image_dir_path, category_index):
 def main():
     args = get_args()
     image_dir_path = pathlib.Path(args.image_dir_path)
+    print("\nimage_dir_path: {}".format(image_dir_path))
     model_name = args.model_name
     labels_path = args.labels_path
+    # 拡張子に気をつける
     TEST_IMAGE_PATHS = sorted(list(image_dir_path.glob("*.jpg")))
-    print(TEST_IMAGE_PATHS)
     # model_name = 'ssd_mobilenet_v1_coco_2017_11_17'
     detection_model = load_model(model_name)
     #print(detection_model.inputs)
@@ -179,8 +191,9 @@ def main():
         # os.mkdir(os.path.join(PATH_TO_OBJECT_DETECTION_DIR, "result"))
         os.mkdir(_result_image_dir_path)
 
-    for _image_path in TEST_IMAGE_PATHS:
+    for _image_path in tqdm(TEST_IMAGE_PATHS):
       show_inference(detection_model, _image_path, _result_image_dir_path, _category_index)
+      time.sleep(0.1)
 
 if __name__ == '__main__':
     main()
