@@ -48,7 +48,7 @@ def get_args():
   parser.add_argument(
     "--base_dir_path", 
     type=str,
-    default='/home/intern1/Asset/Mosaic-866522040004307_DN0504516068930/',
+    default='/home/intern1/Asset/Mosaic-866522040005163_DN0504514461400/2020-04-01/',
     help="set target image directory path")
   parser.add_argument(
     "--model_name",
@@ -170,22 +170,19 @@ def show_inference(model, image_path, result_image_dir_path, category_index):
 def main():
     args = get_args()
     BASE_DIR = args.base_dir_path
-    image_dir_path = pathlib.Path(os.path.join(BASE_DIR, 'src'))
+    image_dir_path = pathlib.Path(BASE_DIR)
     print("\nimage_dir_path: {}".format(image_dir_path))
     model_name = args.model_name
     labels_path = args.labels_path
-    # 拡張子に気をつける
+
+    # HACK: 拡張子に気をつける
     TEST_IMAGE_PATHS = sorted(list(image_dir_path.glob("*.jpg")))
-    # model_name = 'ssd_mobilenet_v1_coco_2017_11_17'
     detection_model = load_model(model_name)
-    #print(detection_model.inputs)
-    #detection_model.output_dtypes
-    #detection_model.output_shapes
 
     # List of the strings that is used to add correct label for each box.
     _category_index = label_map_util.create_category_index_from_labelmap(labels_path, use_display_name=True)
 
-    _result_image_dir_path = os.path.join(BASE_DIR, "result")
+    _result_image_dir_path = os.path.join(BASE_DIR+"_result")
     if not os.path.exists(_result_image_dir_path):
         os.mkdir(_result_image_dir_path)
 
